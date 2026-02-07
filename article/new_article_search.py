@@ -1,18 +1,11 @@
 from Bio import Entrez
 import time
-from ..config import config
 import json
 from impact_factor.core import Factor
 fa = Factor()
 
 
-
-# 必须设置 Email
-Entrez.email = config.pubmed_email
-# 如果有 API Key，建议也加上
-# Entrez.api_key = "your_api_key_here"
-
-def search_and_fetch_pubmed(query, max_results=50):
+def search_and_fetch_pubmed(query, max_results=10):
     """
     搜索并直接返回完整的文章信息列表
     """
@@ -93,9 +86,6 @@ def search_and_fetch_pubmed(query, max_results=50):
 
 # 测试运行
 
-query = "(Hypertension, Pulmonary[MeSH Terms])"
-
-results = search_and_fetch_pubmed(query, max_results=10)
 
 
 

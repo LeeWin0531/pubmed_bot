@@ -2,11 +2,11 @@ import openai
 import json
 import time
 
-def translate_high_impact_articles(articles, batch_size=3):
+def translate_articles(articles, batch_size, translation_key, model_api, model_name):
 
     to_translate = articles
 
-    client = openai.OpenAI(api_key="sk-86db1656b5a34daf8d856c58dd064530", base_url="https://api.deepseek.com")
+    client = openai.OpenAI(api_key=translation_key, base_url=model_api)
 
     # 2. 分批处理
     for i in range(0, len(to_translate), batch_size):
@@ -35,7 +35,7 @@ def translate_high_impact_articles(articles, batch_size=3):
         """
         try:
             response = client.chat.completions.create(
-                model="deepseek-chat",
+                model=model_name,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={'type': 'json_object'} # 强制返回 JSON 格式
             )
@@ -62,4 +62,3 @@ def translate_high_impact_articles(articles, batch_size=3):
     return articles
 
 
-result2 = translate_high_impact_articles(results)

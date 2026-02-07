@@ -88,7 +88,4 @@ def format_articles_to_mobile_html(articles_list):
     
     return html_start + html_body + html_end
 
-result4 = format_articles_to_mobile_html(result2)
 
-with open("email_preview.html", "w", encoding="utf-8") as f:
-    f.write(result4)
