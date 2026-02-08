@@ -1,0 +1,2 @@
+pubmed机器人，自送获取每日最新文献，并发送
+需要在my_config_example.py中输入相关信息；并重命名为my_config.py
