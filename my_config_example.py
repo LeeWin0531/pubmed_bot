@@ -12,7 +12,7 @@ MODEL_NAME = ""
 
 # --- 2. 邮箱发送配置 ---
 SMTP_SERVER = ""
-SMTP_PORT = 
+SMTP_PORT = None
 SENDER_EMAIL = ""
 SENDER_PASS = ""  # 你的真实授权码
 
