@@ -173,7 +173,7 @@ if __name__ == "__main__":
         
         # 发送给管理者
         send_log_email(final_log,                 
-                       receiver_email=my_config.CONTROLLER_EMAIL,          
+                       receiver_email=my_config.CONTROLLER,          
                        sender_email=my_config.SENDER_EMAIL,
                        sender_pass=my_config.SENDER_PASS,
                        smtp_server=my_config.SMTP_SERVER,
