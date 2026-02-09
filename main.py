@@ -1,10 +1,28 @@
 # main.py
+import my_config
 import sys
 import datetime
 import subprocess
-import my_config
+import io
+import traceback
 # 注意：这里千万不要导入 article, translate 等模块！
 # from article.new_article_search import ... (❌ 不要写在这里)
+class DualLogger:
+    def __init__(self):
+        self.terminal = sys.stdout          # 记住原本的屏幕输出渠道
+        self.log_capture = io.StringIO()    # 创建一个内存缓冲区来存日志
+
+    def write(self, message):
+        self.terminal.write(message)        # 照常打印到屏幕
+        self.log_capture.write(message)     # 同时写入内存
+
+    def flush(self):
+        self.terminal.flush()
+        self.log_capture.flush()
+
+    def get_log_content(self):
+        return self.log_capture.getvalue()
+
 def log(message):
     """带时间的打印函数"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -38,7 +56,6 @@ def run_pipeline():
     from translate.translation import translate_articles
     from export.export_html2 import format_articles_to_mobile_html
     from send_email.send_email import send_html_email
-
     # --- 3. 全局配置注入 ---
     Entrez.email = my_config.PUBMED_EMAIL
     log(f"🔧 全局配置已设置: Entrez Email = {Entrez.email}")
@@ -130,7 +147,34 @@ def run_pipeline():
     log(f"🏁 [{datetime.datetime.now()}] 所有任务圆满完成！")
 
 if __name__ == "__main__":
+
+    from send_email.send_email import send_log_email
+
+    logger = DualLogger()
+    # 把标准输出（print）和错误输出（报错）都接管过来
+    sys.stdout = logger
+    sys.stderr = logger
+
+    run_status = "SUCCESS"
+  
     try:
         run_pipeline()
-    except Exception as e:
-        log(f"Error: {e}")
+    except Exception :
+        run_status = "ERROR"
+        traceback.print_exc()
+    finally:
+        # --- D. 无论成功失败，最后发送日志 ---
+        # 恢复系统的标准输出，防止发送邮件函数里的 print 出问题
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        
+        # 获取刚才所有的打印内容
+        final_log = logger.get_log_content()
+        
+        # 发送给管理者
+        send_log_email(final_log,                 
+                       receiver_email=my_config.CONTROLLER_EMAIL,          
+                       sender_email=my_config.SENDER_EMAIL,
+                       sender_pass=my_config.SENDER_PASS,
+                       smtp_server=my_config.SMTP_SERVER,
+                       smtp_port=my_config.SMTP_PORT,status=run_status)
