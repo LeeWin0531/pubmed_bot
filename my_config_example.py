@@ -24,7 +24,7 @@ RECEIVERS = ""
 # --- 4. 搜索参数 ---
 # 这里的日期可以用 datetime 动态生成，也可以写死
 
-SEARCH_QUERY = f'(Hypertension, Pulmonary[MeSH Terms]) AND ("{yesterday_str}"[EDAT] : "3000"[EDAT])'
+SEARCH_QUERY = f'(Hypertension, Pulmonary[MeSH Terms]) AND ("{yesterday_str}"[CRDT] : "3000"[CRDT])'
 MAX_RESULTS = 20
 BATCH_SIZE = 5
 
