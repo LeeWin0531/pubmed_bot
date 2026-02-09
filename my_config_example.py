@@ -1,7 +1,7 @@
 # config.py
 import datetime
 now = datetime.datetime.now()
-yesterday = now - datetime.timedelta(days=1)
+yesterday = now - datetime.timedelta(days=3)
 yesterday_str = yesterday.strftime("%Y/%m/%d")
 
 
