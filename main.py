@@ -44,7 +44,7 @@ def auto_update_library():
     except Exception as e:
         log(f"⚠️ 自动更新失败: {e}")
 
-def run_pipeline():
+def run_pipeline(QUERY,RECEIVERS):
     # --- 1. 先跑更新 ---
     auto_update_library()
     
@@ -61,9 +61,9 @@ def run_pipeline():
     log(f"🔧 全局配置已设置: Entrez Email = {Entrez.email}")
 
     # --- 4. 获取文献 ---
-    log(f"🔍 Step 1: 正在搜索文献 query: {my_config.SEARCH_QUERY}")
+    log(f"🔍 Step 1: 正在搜索文献: {QUERY.get('theme')}")
     results = search_and_fetch_pubmed(
-        my_config.SEARCH_QUERY, 
+        QUERY, 
         max_results=my_config.MAX_RESULTS
     )
 
@@ -98,7 +98,7 @@ def run_pipeline():
 
     # 1️⃣ 【数据归一化】判断类型，统一转为列表
     # 获取原始配置
-    raw_receivers = my_config.RECEIVERS
+    raw_receivers = RECEIVERS
     
     receivers_list = []
     
@@ -157,24 +157,37 @@ if __name__ == "__main__":
 
     run_status = "SUCCESS"
   
-    try:
-        run_pipeline()
-    except Exception :
-        run_status = "ERROR"
-        traceback.print_exc()
-    finally:
-        # --- D. 无论成功失败，最后发送日志 ---
-        # 恢复系统的标准输出，防止发送邮件函数里的 print 出问题
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+tasks = [
+    (my_config.QUERY1, my_config.RECEIVERS1),
+    (my_config.QUERY2, my_config.RECEIVERS2)
+]
+
+try:
+    # --- 大 try 开始 ---
+    for query, receivers in tasks:
+        try:
+            # 小 try，只负责捕获报错，不负责恢复 stdout
+            print(f"🚀 开始执行任务: {query.get('theme')}")
+            run_pipeline(QUERY=query, RECEIVERS=receivers)
+        except Exception:
+            print(f"❌ 任务 {query.get('theme')} 失败")
+            traceback.print_exc()
+            # 注意：这里没有 finally
+
+finally:
+    # --- 大 try 结束 ---
+    # 只有当 for 循环彻底跑完（或者崩溃退出）后，才执行这里
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+    print("--------------------------")
         
         # 获取刚才所有的打印内容
-        final_log = logger.get_log_content()
+final_log = logger.get_log_content()
         
         # 发送给管理者
-        send_log_email(final_log,                 
-                       receiver_email=my_config.CONTROLLER,          
-                       sender_email=my_config.SENDER_EMAIL,
-                       sender_pass=my_config.SENDER_PASS,
-                       smtp_server=my_config.SMTP_SERVER,
-                       smtp_port=my_config.SMTP_PORT,status=run_status)
+send_log_email(final_log,                 
+               receiver_email=my_config.CONTROLLER,          
+               sender_email=my_config.SENDER_EMAIL,
+               sender_pass=my_config.SENDER_PASS,
+               smtp_server=my_config.SMTP_SERVER,
+               smtp_port=my_config.SMTP_PORT,status=run_status)

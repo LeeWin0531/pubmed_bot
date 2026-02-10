@@ -1,12 +1,18 @@
 from Bio import Entrez
 import os
-import time
 import json
 from impact_factor.core import Factor
 fa = Factor()
+import datetime
+now = datetime.datetime.now()
+yesterday = now - datetime.timedelta(days=1)
+yesterday_str = yesterday.strftime("%m_%d")
+today_str = now.strftime("%m_%d")
+day_before_yesterday = now - datetime.timedelta(days=2)
+dby_str = day_before_yesterday.strftime("%m_%d")
 
 
-def search_and_fetch_pubmed(query, max_results=10):
+def search_and_fetch_pubmed(QUERY, max_results=10):
     """
     搜索并直接返回完整的文章信息列表
     """
@@ -14,7 +20,7 @@ def search_and_fetch_pubmed(query, max_results=10):
         # 第一步：搜索 PMID
         handle = Entrez.esearch(
             db="pubmed",
-            term=query,
+            term=QUERY.get("query"),
             retmax=max_results,
             sort="relevance"
         )
@@ -32,10 +38,10 @@ def search_and_fetch_pubmed(query, max_results=10):
         new_id_list = current_id_list 
 
         # 2. 判断：如果历史文件存在，则进行比对
-        if os.path.exists("pubmed_history.json"):
-            print("📂 发现历史记录文件: 'pubmed_history.json'")
+        if os.path.exists(f'{QUERY.get("theme")}_{yesterday_str}.json'):
+            print(f'📂 发现历史记录文件:{QUERY.get("theme")}_{yesterday_str}.json ')
             try:
-                with open("pubmed_history.json", 'r', encoding='utf-8') as f:
+                with open(f'{QUERY.get("theme")}_{yesterday_str}.json', 'r', encoding='utf-8') as f:
                     old_id_list = json.load(f)
                     old_id_set = set(old_id_list) # 转为集合方便计算
                 
@@ -52,13 +58,26 @@ def search_and_fetch_pubmed(query, max_results=10):
         else:
             print("🆕 未发现历史记录文件，将执行全量查询并创建记录。")
 
-        # --- 覆写历史文件 (为明天做准备) ---
+        # --- 保存今日文件 ---
         # 无论是否有新增，都把“今天搜到的所有ID”存进去，作为下一次的“历史”
         try:
-            with open("pubmed_history.json", 'w', encoding='utf-8') as f:
+            with open(f'{QUERY.get("theme")}_{today_str}.json', 'w', encoding='utf-8') as f:
                 json.dump(current_id_list, f)
         except Exception as e:
             print(f"❌ 写入历史文件失败: {e}")
+
+        #---删除前日文件---   
+
+        if os.path.exists(f'{QUERY.get("theme")}_{dby_str}.json'):
+            try:
+                os.remove(f'{QUERY.get("theme")}_{dby_str}.json')
+                print(f'🗑️ 已删除过期文件: {QUERY.get("theme")}_{dby_str}.json')
+            except OSError as e:
+                print(f"⚠️ 删除文件失败: {e}")
+        else:
+            # 这一行通常不需要打印，为了调试可以留着
+            # print(f"未发现前日文件 {file_to_remove}，无需操作。")
+            pass
 
         # --- 如果没有新文章，直接结束 ---
         if not new_id_list:
